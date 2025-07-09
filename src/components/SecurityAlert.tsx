@@ -5,9 +5,8 @@ import { useSecurityMonitoring } from '../hooks/useSecurityMonitoring';
 export default function SecurityAlert() {
   const { alerts, acknowledgeAlert, clearAlerts } = useSecurityMonitoring();
 
-  // Afficher seulement pour les admins en production
-  const { user } = useAuth();
-  if (process.env.NODE_ENV === 'production' && user?.role !== 'admin') {
+  // Ne pas afficher en production pour les utilisateurs normaux
+  if (process.env.NODE_ENV === 'production') {
     return null;
   }
 

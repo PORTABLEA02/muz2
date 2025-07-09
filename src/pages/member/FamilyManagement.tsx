@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { Plus, Edit2, Trash2, User, Upload, FileText } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { userService } from '../../services/userService';
-import { validationService } from '../../services/validationService';
 import { FamilyMember } from '../../types';
 
 interface MemberForm {
@@ -57,13 +56,6 @@ export default function FamilyManagement() {
 
   const onSubmit = async (data: MemberForm) => {
     if (!user) return;
-    
-    // Client-side validation first
-    const validation = validationService.validateFamilyMemberData(data);
-    if (!validation.isValid) {
-      alert(`Erreurs de validation: ${validation.errors.join(', ')}`);
-      return;
-    }
     
     setIsSubmitting(true);
     

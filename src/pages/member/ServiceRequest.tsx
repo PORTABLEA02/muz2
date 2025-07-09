@@ -3,7 +3,6 @@ import { FileText, Upload, Send, AlertCircle, CheckCircle, Info } from "lucide-r
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../contexts/AuthContext';
 import { userService } from '../../services/userService';
-import { validationService } from '../../services/validationService';
 import { FamilyMember, Service } from '../../types';
 
 interface ServiceRequestForm {
@@ -95,38 +94,6 @@ export default function ServiceRequest() {
   const onSubmit = async (data: ServiceRequestForm) => {
     if (!user || !selectedService) return;
 
-    // Client-side validation first
-    const clientValidation = validationService.validateServiceRequestData({
-      ...data,
-      serviceId: selectedService.id
-    });
-    
-    if (!clientValidation.isValid) {
-      setSubmitResult({
-        success: false,
-        message: `Erreurs de validation: ${clientValidation.errors.join(', ')}`
-      });
-      return;
-    }
-
-    // Check rate limit
-    try {
-      const rateLimitCheck = await validationService.checkRequestRateLimit();
-      if (!rateLimitCheck.allowed) {
-        setSubmitResult({
-          success: false,
-          message: 'Limite de demandes atteinte. Veuillez réessayer plus tard.'
-        });
-        return;
-      }
-    } catch (error: any) {
-      setSubmitResult({
-        success: false,
-        message: error.message
-      });
-      return;
-    }
-
     // Vérifier que des fichiers sont sélectionnés
     if (selectedFiles.length === 0) {
       setSubmitResult({
@@ -166,7 +133,7 @@ export default function ServiceRequest() {
         service: selectedService.name,
         serviceId: selectedService.id,
         beneficiary: beneficiaryName,
-        amount: data.amount,
+        amount: Number(data.amount), // Convertir explicitement en nombre
         description: data.description,
         paymentMethod: data.paymentMethod,
         accountHolderName: data.accountHolderName,
@@ -203,7 +170,7 @@ export default function ServiceRequest() {
 
       setSubmitResult({
         success: true,
-        message: `Votre demande a été soumise avec succès et est maintenant "En attente de validation automatique". Numéro de référence: ${requestId.substring(0, 8).toUpperCase()}. Elle sera automatiquement validée puis traitée par un administrateur.`
+        message: `Votre demande a été soumise avec succès et est maintenant "En attente de traitement". Numéro de référence: ${requestId.substring(0, 8).toUpperCase()}. Vous recevrez une notification dès qu'elle sera traitée par l'administrateur.`
       });
 
       // Réinitialiser le formulaire
@@ -275,8 +242,8 @@ export default function ServiceRequest() {
                       <div className="mt-4 p-3 bg-green-100 rounded-lg">
                         <p className="text-sm font-medium text-green-900">Prochaines étapes :</p>
                         <ul className="text-sm text-green-800 mt-1 space-y-1">
-                          <li>• Votre demande est en cours de <strong>validation automatique</strong></li>
-                          <li>• Si validée, un administrateur examinera votre dossier sous 48h</li>
+                          <li>• Votre demande est maintenant <strong>"En attente de traitement"</strong></li>
+                          <li>• Un administrateur examinera votre dossier sous 48h</li>
                           <li>• Vous recevrez une notification par email du résultat</li>
                           <li>• Vous pouvez suivre l'état dans votre historique</li>
                         </ul>
@@ -712,10 +679,9 @@ export default function ServiceRequest() {
                       <li>• <strong>Tous les champs marqués d'un * sont obligatoires</strong></li>
                       <li>• <strong>Les pièces justificatives sont obligatoires</strong> pour toute demande</li>
                       <li>• Assurez-vous que tous les documents requis sont joints à votre demande</li>
-                      <li>• Les demandes incomplètes seront automatiquement rejetées</li>
-                      <li>• Votre demande sera d'abord <strong>validée automatiquement</strong> puis traitée</li>
+                      <li>• Les demandes incomplètes peuvent être retardées ou rejetées</li>
+                      <li>• Votre demande aura le statut <strong>"En attente de traitement"</strong> après soumission</li>
                       <li>• Le délai de traitement est généralement de 48h ouvrables</li>
-                      <li>• Maximum 3 demandes par heure autorisées</li>
                     </ul>
                   </div>
                 </div>

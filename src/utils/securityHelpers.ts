@@ -196,20 +196,22 @@ export const generateSecureToken = (): string => {
 };
 
 // Validation des montants
-export const validateAmount = (amount: number, maxAmount?: number): { isValid: boolean; error?: string } => {
-  if (isNaN(amount) || amount <= 0) {
+export const validateAmount = (amount: string | number, maxAmount?: number): { isValid: boolean; error?: string } => {
+  const numAmount = Number(amount);
+  
+  if (isNaN(numAmount) || numAmount <= 0) {
     return { isValid: false, error: 'Le montant doit être un nombre positif' };
   }
 
-  if (maxAmount && amount > maxAmount) {
+  if (maxAmount && numAmount > maxAmount) {
     return { 
       isValid: false, 
-      error: `Le montant ne peut pas dépasser ${maxAmount.toLocaleString()} FCFA` 
+      error: `Le montant ne peut pas dépasser ${maxAmount.toLocaleString()} FCFA`
     };
   }
 
   // Vérifier que le montant n'est pas trop élevé (protection contre les erreurs)
-  if (amount > 100000000) { // 100 millions
+  if (numAmount > 100000000) { // 100 millions
     return { isValid: false, error: 'Montant trop élevé' };
   }
 

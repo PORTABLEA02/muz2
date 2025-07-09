@@ -218,7 +218,7 @@ export default function MemberDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <p className="text-2xl font-bold text-blue-600">
-                {requests.reduce((sum, req) => sum + req.amount, 0).toLocaleString()} FCFA
+                {requests.reduce((sum, req) => sum + Number(req.amount), 0).toLocaleString()} FCFA
               </p>
               <p className="text-sm text-blue-800">Total demandé</p>
             </div>
@@ -226,7 +226,7 @@ export default function MemberDashboard() {
               <p className="text-2xl font-bold text-green-600">
                 {requests
                   .filter(req => req.status === 'approved')
-                  .reduce((sum, req) => sum + req.amount, 0)
+                  .reduce((sum, req) => sum + Number(req.amount), 0)
                   .toLocaleString()} FCFA
               </p>
               <p className="text-sm text-green-800">Montant approuvé</p>
@@ -235,7 +235,7 @@ export default function MemberDashboard() {
               <p className="text-2xl font-bold text-yellow-600">
                 {requests
                   .filter(req => req.status === 'pending')
-                  .reduce((sum, req) => sum + req.amount, 0)
+                  .reduce((sum, req) => sum + Number(req.amount), 0)
                   .toLocaleString()} FCFA
               </p>
               <p className="text-sm text-yellow-800">En attente</p>
