@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import PasswordResetPage from './pages/PasswordResetPage';
@@ -19,6 +19,18 @@ import ServiceRequest from './pages/member/ServiceRequest';
 import RequestHistory from './pages/member/RequestHistory';
 import FirebaseStatus from './components/FirebaseStatus';
 import DatabaseInitializer from './components/DatabaseInitializer';
+
+// Composant pour gérer les erreurs de navigation
+function NavigationErrorBoundary({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  
+  React.useEffect(() => {
+    // Log pour débugger les problèmes de navigation
+    console.log('Navigation vers:', location.pathname);
+  }, [location]);
+  
+  return <>{children}</>;
+}
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: string }) {
   const { user, loading } = useAuth();
@@ -133,11 +145,13 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
-          <AppRoutes />
-          <FirebaseStatus />
-          <DatabaseInitializer />
-        </div>
+        <NavigationErrorBoundary>
+          <div className="min-h-screen bg-gray-50">
+            <AppRoutes />
+            <FirebaseStatus />
+            <DatabaseInitializer />
+          </div>
+        </NavigationErrorBoundary>
       </Router>
     </AuthProvider>
   );
