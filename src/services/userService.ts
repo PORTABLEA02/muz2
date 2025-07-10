@@ -61,21 +61,6 @@ export const userService = {
     }
   },
 
-  // Validation des rôles
-  async validateUserRole(userId: string, requiredRole: string): Promise<boolean> {
-    try {
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      if (userDoc.exists()) {
-        const userData = userDoc.data() as User;
-        return userData.role === requiredRole;
-      }
-      return false;
-    } catch (error) {
-      console.error('Erreur lors de la validation du rôle:', error);
-      return false;
-    }
-  },
-
   // Membres de famille
   async getFamilyMembers(userId: string): Promise<FamilyMember[]> {
     try {

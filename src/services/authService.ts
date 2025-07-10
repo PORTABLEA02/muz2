@@ -24,6 +24,7 @@ export const authService = {
       
       if (userDoc.exists()) {
         const userData = userDoc.data() as User;
+        
         // Mettre à jour la dernière connexion
         await updateDoc(doc(db, 'users', firebaseUser.uid), {
           lastLogin: new Date().toISOString(),

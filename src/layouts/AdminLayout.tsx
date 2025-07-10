@@ -8,8 +8,7 @@ import {
   User, 
   LogOut,
   Shield,
-  Upload,
-  CheckSquare
+  Upload
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -18,7 +17,6 @@ const navigation = [
   { name: 'Gestion des adhérents', href: '/admin/users', icon: Users },
   { name: 'Importation utilisateurs', href: '/admin/import', icon: Upload },
   { name: 'Gestion des demandes', href: '/admin/requests', icon: FileText },
-  { name: 'Validation finale', href: '/admin/final-validation', icon: CheckSquare },
   { name: 'Gestion des services', href: '/admin/services', icon: Settings },
 ];
 
