@@ -7,6 +7,12 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
+    // Fonction helper pour vérifier si l'utilisateur est contrôleur
+    function isController() {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'controller';
+    }
+    
     // Fonction helper pour vérifier si l'utilisateur est authentifié
     function isAuthenticated() {
       return request.auth != null;
@@ -22,7 +28,7 @@ service cloud.firestore {
       return data.keys().hasAll(['email', 'name', 'role']) &&
              data.email is string &&
              data.name is string &&
-             data.role in ['admin', 'member'];
+             data.role in ['admin', 'member', 'controller'];
     }
     
     function isValidServiceRequest(data) {
@@ -32,13 +38,13 @@ service cloud.firestore {
              data.amount is number &&
              data.amount > 0 &&
              data.description is string &&
-             data.status in ['pending', 'approved', 'rejected'];
+             data.status in ['pending', 'under_review', 'controller_approved', 'controller_rejected', 'approved', 'rejected'];
     }
     
     // Règles pour les utilisateurs
     match /users/{userId} {
-      // Lecture: utilisateur lui-même ou admin
-      allow read: if isOwner(userId) || isAdmin();
+      // Lecture: utilisateur lui-même ou admin ou contrôleur
+      allow read: if isOwner(userId) || isAdmin() || isController();
       
       // Création: seulement les admins
       allow create: if isAdmin() && isValidUser(request.resource.data);
@@ -55,8 +61,8 @@ service cloud.firestore {
     
     // Règles pour les demandes de service
     match /serviceRequests/{requestId} {
-      // Lecture: propriétaire de la demande ou admin
-      allow read: if isOwner(resource.data.userId) || isAdmin();
+      // Lecture: propriétaire de la demande, admin ou contrôleur
+      allow read: if isOwner(resource.data.userId) || isAdmin() || isController();
       
       // Création: utilisateur authentifié pour ses propres demandes
       allow create: if isAuthenticated() && 
@@ -64,10 +70,8 @@ service cloud.firestore {
                    isValidServiceRequest(request.resource.data) &&
                    request.resource.data.status == 'pending';
       
-      // Mise à jour: seulement les admins (pour changer le statut)
-      allow update: if isAdmin() && 
-                   request.resource.data.diff(resource.data).affectedKeys()
-                   .hasOnly(['status', 'comments', 'reviewedBy', 'responseDate']);
+      // Mise à jour: admins (pour validation finale) ou contrôleurs (pour avis)
+      allow update: if isAdmin() || isController();
       
       // Suppression: propriétaire (si en attente) ou admin
       allow delete: if (isOwner(resource.data.userId) && resource.data.status == 'pending') ||
@@ -132,8 +136,8 @@ service cloud.firestore {
     
     // Règles pour les tests de connectivité
     match /test/{document=**} {
-      // Lecture: utilisateurs authentifiés (pour vérifier la connectivité)
-      allow read: if isAuthenticated();
+      // Lecture: accès public pour vérifier la connectivité
+      allow read: if true;
     }
     
     // Règles par défaut: refuser tout accès non spécifié
