@@ -130,6 +130,12 @@ service cloud.firestore {
       // Pas de mise à jour ou suppression
     }
     
+    // Règles pour les tests de connectivité
+    match /test/{document=**} {
+      // Lecture: utilisateurs authentifiés (pour vérifier la connectivité)
+      allow read: if isAuthenticated();
+    }
+    
     // Règles par défaut: refuser tout accès non spécifié
     match /{document=**} {
       allow read, write: if false;

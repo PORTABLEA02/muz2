@@ -190,7 +190,7 @@ export default function FamilyManagement() {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Enfants</p>
-              <p className="text-2xl font-bold text-gray-900">{members.filter(m => calculateAge(m.birthDate) < 18).length}</p>
+              <p className="text-2xl font-bold text-gray-900">{members.filter(m => m.relationship === 'Fils' || m.relationship === 'Fille').length}</p>
             </div>
           </div>
         </div>
@@ -436,7 +436,7 @@ export default function FamilyManagement() {
                       validAge: (value) => {
                         const selectedDate = new Date(value);
                         const today = new Date();
-                        const age = today.getFullYear() - selectedDate.getFullYear();
+                        let age = today.getFullYear() - selectedDate.getFullYear();
                         const monthDiff = today.getMonth() - selectedDate.getMonth();
                         
                         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < selectedDate.getDate())) {
