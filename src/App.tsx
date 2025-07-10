@@ -12,6 +12,11 @@ import UserImport from './pages/admin/UserImport';
 import RequestManagement from './pages/admin/RequestManagement';
 import ServiceManagement from './pages/admin/ServiceManagement';
 import AdminProfile from './pages/admin/AdminProfile';
+import FinalValidation from './pages/admin/FinalValidation';
+import ControllerLayout from './layouts/ControllerLayout';
+import ControllerDashboard from './pages/controller/ControllerDashboard';
+import ControllerProfile from './pages/controller/ControllerProfile';
+import RequestReview from './pages/controller/RequestReview';
 import MemberDashboard from './pages/member/MemberDashboard';
 import MemberProfile from './pages/member/MemberProfile';
 import FamilyManagement from './pages/member/FamilyManagement';
@@ -51,7 +56,10 @@ function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode;
   }
   
   if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to="/login" replace />;
+    // Rediriger vers le dashboard approprié selon le rôle
+    const redirectPath = user.role === 'admin' ? '/admin' : 
+                        user.role === 'controller' ? '/controller' : '/member';
+    return <Navigate to={redirectPath} replace />;
   }
   
   // Rediriger vers le changement de mot de passe si c'est la première connexion
@@ -86,7 +94,10 @@ function AppRoutes() {
             user.firstLogin ? (
               <Navigate to="/change-password" replace />
             ) : (
-              <Navigate to={user.role === 'admin' ? '/admin' : '/member'} replace />
+              <Navigate to={
+                user.role === 'admin' ? '/admin' : 
+                user.role === 'controller' ? '/controller' : '/member'
+              } replace />
             )
           ) : (
             <LoginPage />
@@ -115,8 +126,20 @@ function AppRoutes() {
         <Route path="users" element={<UserManagement />} />
         <Route path="import" element={<UserImport />} />
         <Route path="requests" element={<RequestManagement />} />
+        <Route path="final-validation" element={<FinalValidation />} />
         <Route path="services" element={<ServiceManagement />} />
         <Route path="profile" element={<AdminProfile />} />
+      </Route>
+      
+      {/* Routes Contrôleur */}
+      <Route path="/controller" element={
+        <ProtectedRoute requiredRole="controller">
+          <ControllerLayout />
+        </ProtectedRoute>
+      }>
+        <Route index element={<ControllerDashboard />} />
+        <Route path="review" element={<RequestReview />} />
+        <Route path="profile" element={<ControllerProfile />} />
       </Route>
       
       {/* Routes Membre */}

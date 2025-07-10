@@ -24,7 +24,7 @@ export const authService = {
       
       if (userDoc.exists()) {
         const userData = userDoc.data() as User;
-        
+        return userData.role === requiredRole || userData.role === 'admin'; // Admin a tous les droits
         // Mettre à jour la dernière connexion
         await updateDoc(doc(db, 'users', firebaseUser.uid), {
           lastLogin: new Date().toISOString(),

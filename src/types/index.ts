@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'member';
+  role: 'admin' | 'member' | 'controller';
   phone?: string;
   address?: string;
   birthDate?: string;
@@ -48,12 +48,18 @@ export interface ServiceRequest {
   beneficiary: string;
   amount: number;
   description: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'under_review' | 'controller_approved' | 'controller_rejected' | 'approved' | 'rejected';
   submissionDate: string;
   responseDate?: string;
   documents: string[];
   comments?: string;
   reviewedBy?: string;
+  controllerReview?: {
+    reviewedBy: string;
+    reviewDate: string;
+    decision: 'approved' | 'rejected';
+    comments: string;
+  };
   paymentMethod: 'mobile' | 'bank';
   accountHolderName: string;
   // Champs conditionnels selon le mode de paiement

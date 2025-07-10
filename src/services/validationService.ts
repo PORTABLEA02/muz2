@@ -70,6 +70,11 @@ export const validationService = {
     if (!data.role || !['admin', 'member'].includes(data.role)) {
       errors.push('Rôle invalide');
     }
+    
+    // Validation pour le rôle contrôleur
+    if (!data.role || !['admin', 'member', 'controller'].includes(data.role)) {
+      errors.push('Rôle invalide');
+    }
 
     if (data.phone) {
       const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{8,14}$/;
