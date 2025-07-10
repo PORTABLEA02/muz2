@@ -167,6 +167,45 @@ export const validateNIP = (nip: string): boolean => {
   return /^\d{13}$/.test(nip);
 };
 
+// Validation des dates de naissance
+export const validateBirthDate = (birthDate: string): { isValid: boolean; error?: string } => {
+  const selectedDate = new Date(birthDate);
+  const today = new Date();
+  
+  // Vérifier que la date n'est pas dans le futur
+  if (selectedDate > today) {
+    return {
+      isValid: false,
+      error: 'La date de naissance ne peut pas être dans le futur'
+    };
+  }
+  
+  // Vérifier que l'âge est raisonnable (maximum 120 ans)
+  const age = today.getFullYear() - selectedDate.getFullYear();
+  const monthDiff = today.getMonth() - selectedDate.getMonth();
+  
+  let calculatedAge = age;
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < selectedDate.getDate())) {
+    calculatedAge--;
+  }
+  
+  if (calculatedAge > 120) {
+    return {
+      isValid: false,
+      error: 'Âge invalide (maximum 120 ans)'
+    };
+  }
+  
+  if (calculatedAge < 0) {
+    return {
+      isValid: false,
+      error: 'Date de naissance invalide'
+    };
+  }
+  
+  return { isValid: true };
+};
+
 // Chiffrement des données sensibles (pour le stockage local temporaire)
 export const encryptData = (data: string, key: string): string => {
   try {

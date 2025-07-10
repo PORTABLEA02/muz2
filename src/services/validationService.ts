@@ -104,9 +104,26 @@ export const validationService = {
     } else {
       const birthDate = new Date(data.birthDate);
       const now = new Date();
-      const age = now.getFullYear() - birthDate.getFullYear();
       
-      if (age < 0 || age > 120 || birthDate > now) {
+      // Vérifier que la date n'est pas dans le futur
+      if (birthDate > now) {
+        errors.push('La date de naissance ne peut pas être dans le futur');
+      }
+      
+      // Calculer l'âge correctement
+      const age = now.getFullYear() - birthDate.getFullYear();
+      const monthDiff = now.getMonth() - birthDate.getMonth();
+      
+      let calculatedAge = age;
+      if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birthDate.getDate())) {
+        calculatedAge--;
+      }
+      
+      if (calculatedAge > 120) {
+        errors.push('Âge invalide (maximum 120 ans)');
+      }
+      
+      if (calculatedAge < 0) {
         errors.push('Date de naissance invalide');
       }
     }

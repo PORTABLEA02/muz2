@@ -55,6 +55,19 @@ export default function FamilyManagement() {
   const onSubmit = async (data: MemberForm) => {
     if (!user) return;
     
+    // Vérifier la limite d'enfants (fils/fille)
+    const childRelationships = ['Fils', 'Fille'];
+    if (childRelationships.includes(data.relationship)) {
+      const existingChildren = members.filter(member => 
+        childRelationships.includes(member.relationship)
+      );
+      
+      if (existingChildren.length >= 6) {
+        alert('Vous ne pouvez pas ajouter plus de 6 enfants (fils ou fille). Limite atteinte.');
+        return;
+      }
+    }
+    
     // Vérifier les relations uniques
     const uniqueRelationships = ['Époux/Épouse', 'Père', 'Mère', 'Beau-père', 'Belle-mère'];
     if (uniqueRelationships.includes(data.relationship)) {
@@ -336,14 +349,26 @@ export default function FamilyManagement() {
                     const isUnique = uniqueRelationships.includes(option);
                     const alreadyExists = isUnique && members.some(member => member.relationship === option);
                     
+                    // Vérifier la limite d'enfants
+                    const childRelationships = ['Fils', 'Fille'];
+                    const isChild = childRelationships.includes(option);
+                    const existingChildren = members.filter(member => 
+                      childRelationships.includes(member.relationship)
+                    );
+                    const childLimitReached = isChild && existingChildren.length >= 6;
+                    
+                    const isDisabled = alreadyExists || childLimitReached;
+                    
                     return (
                       <option 
                         key={option} 
                         value={option}
-                        disabled={alreadyExists}
-                        style={alreadyExists ? { color: '#9CA3AF', fontStyle: 'italic' } : {}}
+                        disabled={isDisabled}
+                        style={isDisabled ? { color: '#9CA3AF', fontStyle: 'italic' } : {}}
                       >
-                        {option}{alreadyExists ? ' (Déjà ajouté)' : ''}
+                        {option}
+                        {alreadyExists ? ' (Déjà ajouté)' : ''}
+                        {childLimitReached ? ' (Limite atteinte: 6 max)' : ''}
                       </option>
                     );
                   })}
@@ -351,10 +376,42 @@ export default function FamilyManagement() {
                 {errors.relationship && (
                   <p className="mt-1 text-sm text-red-600">{errors.relationship.message}</p>
                 )}
-                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Note :</strong> Les relations Époux/Épouse, Père, Mère, Beau-père et Belle-mère ne peuvent être ajoutées qu'une seule fois.
-                  </p>
+                <div className="mt-2 space-y-2">
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Limitations :</strong>
+                    </p>
+                    <ul className="text-sm text-blue-800 mt-1 space-y-1">
+                      <li>• Les relations Époux/Épouse, Père, Mère, Beau-père et Belle-mère ne peuvent être ajoutées qu'une seule fois</li>
+                      <li>• Maximum 6 enfants (fils ou fille) autorisés par famille</li>
+                    </ul>
+                  </div>
+                  
+                  {/* Afficher le compteur d'enfants */}
+                  {(() => {
+                    const childRelationships = ['Fils', 'Fille'];
+                    const existingChildren = members.filter(member => 
+                      childRelationships.includes(member.relationship)
+                    );
+                    
+                    if (existingChildren.length > 0) {
+                      return (
+                        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-sm text-green-800">
+                            <strong>Enfants actuels :</strong> {existingChildren.length}/6
+                          </p>
+                          <div className="mt-1">
+                            {existingChildren.map((child, index) => (
+                              <span key={index} className="inline-block text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full mr-1 mb-1">
+                                {child.firstName} ({child.relationship})
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </div>
 
@@ -363,13 +420,47 @@ export default function FamilyManagement() {
                   Date de naissance
                 </label>
                 <input
-                  {...register('birthDate', { required: 'La date de naissance est requise' })}
+                  {...register('birthDate', { 
+                    required: 'La date de naissance est requise',
+                    validate: {
+                      notFuture: (value) => {
+                        const selectedDate = new Date(value);
+                        const today = new Date();
+                        today.setHours(23, 59, 59, 999); // Fin de la journée actuelle
+                        
+                        if (selectedDate > today) {
+                          return 'La date de naissance ne peut pas être dans le futur';
+                        }
+                        return true;
+                      },
+                      validAge: (value) => {
+                        const selectedDate = new Date(value);
+                        const today = new Date();
+                        const age = today.getFullYear() - selectedDate.getFullYear();
+                        const monthDiff = today.getMonth() - selectedDate.getMonth();
+                        
+                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < selectedDate.getDate())) {
+                          age--;
+                        }
+                        
+                        if (age > 120) {
+                          return 'Âge invalide (maximum 120 ans)';
+                        }
+                        
+                        return true;
+                      }
+                    }
+                  })}
                   type="date"
+                  max={new Date().toISOString().split('T')[0]}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {errors.birthDate && (
                   <p className="mt-1 text-sm text-red-600">{errors.birthDate.message}</p>
                 )}
+                <p className="mt-1 text-xs text-gray-500">
+                  La date de naissance ne peut pas être dans le futur
+                </p>
               </div>
 
               <div>
