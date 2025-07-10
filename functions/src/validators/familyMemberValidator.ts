@@ -33,7 +33,7 @@ export async function validateFamilyMember(data: any): Promise<ValidationResult>
     // 4. Validate relationship
     const validRelationships = [
       'Époux/Épouse', 'Fils', 'Fille', 'Père', 'Mère', 
-      'Frère', 'Sœur', 'Autre'
+      'Beau-père', 'Belle-mère'
     ];
     if (data.relationship && !validRelationships.includes(data.relationship)) {
       errors.push('Lien de parenté invalide');

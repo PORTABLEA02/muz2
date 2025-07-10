@@ -18,7 +18,6 @@ export default function FamilyManagement() {
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -30,9 +29,8 @@ export default function FamilyManagement() {
     'Fille',
     'Père',
     'Mère',
-    'Frère',
-    'Sœur',
-    'Autre'
+    'Beau-père',
+    'Belle-mère'
   ];
 
   // Charger les membres de famille depuis Firebase
@@ -57,42 +55,37 @@ export default function FamilyManagement() {
   const onSubmit = async (data: MemberForm) => {
     if (!user) return;
     
+    // Vérifier les relations uniques
+    const uniqueRelationships = ['Époux/Épouse', 'Père', 'Mère', 'Beau-père', 'Belle-mère'];
+    if (uniqueRelationships.includes(data.relationship)) {
+      const existingMember = members.find(member => member.relationship === data.relationship);
+      if (existingMember) {
+        alert(`Un membre avec la relation "${data.relationship}" existe déjà. Cette relation ne peut être ajoutée qu'une seule fois.`);
+        return;
+      }
+    }
+    
     setIsSubmitting(true);
     
     try {
-      if (editingMember) {
-        // Mettre à jour un membre existant
-        await userService.updateFamilyMember(editingMember.id, {
-          ...data,
-          updatedAt: new Date()
-        });
-        
-        // Mettre à jour l'état local
-        setMembers(members.map(member => 
-          member.id === editingMember.id 
-            ? { ...member, ...data, updatedAt: new Date() }
-            : member
-        ));
-      } else {
-        // Créer un nouveau membre
-        const newMemberData = {
-          userId: user.id,
-          ...data,
-          documents: selectedFiles.map(file => file.name),
-          updatedAt: new Date()
-        };
-        
-        const memberId = await userService.addFamilyMember(newMemberData);
-        
-        // Ajouter à l'état local
-        const newMember: FamilyMember = {
-          id: memberId,
-          ...newMemberData,
-          createdAt: new Date()
-        };
-        
-        setMembers([...members, newMember]);
-      }
+      // Créer un nouveau membre
+      const newMemberData = {
+        userId: user.id,
+        ...data,
+        documents: selectedFiles.map(file => file.name),
+        updatedAt: new Date()
+      };
+      
+      const memberId = await userService.addFamilyMember(newMemberData);
+      
+      // Ajouter à l'état local
+      const newMember: FamilyMember = {
+        id: memberId,
+        ...newMemberData,
+        createdAt: new Date()
+      };
+      
+      setMembers([...members, newMember]);
       
       handleCloseModal();
     } catch (error) {
@@ -103,33 +96,8 @@ export default function FamilyManagement() {
     }
   };
 
-  const handleEdit = (member: FamilyMember) => {
-    setEditingMember(member);
-    reset({
-      firstName: member.firstName,
-      lastName: member.lastName,
-      nip: member.nip,
-      relationship: member.relationship,
-      birthDate: member.birthDate
-    });
-    setShowModal(true);
-  };
-
-  const handleDelete = async (memberId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) {
-      try {
-        await userService.deleteFamilyMember(memberId);
-        setMembers(members.filter(member => member.id !== memberId));
-      } catch (error) {
-        console.error('Erreur lors de la suppression:', error);
-        alert('Erreur lors de la suppression du membre');
-      }
-    }
-  };
-
   const handleCloseModal = () => {
     setShowModal(false);
-    setEditingMember(null);
     setSelectedFiles([]);
     reset();
   };
@@ -241,20 +209,6 @@ export default function FamilyManagement() {
                     <p className="text-sm text-gray-600">{member.relationship}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => handleEdit(member)}
-                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(member.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
               </div>
 
               <div className="space-y-3">
@@ -309,7 +263,7 @@ export default function FamilyManagement() {
           <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-900">
-                {editingMember ? 'Modifier le membre' : 'Ajouter un membre'}
+                Ajouter un membre
               </h2>
             </div>
 
@@ -377,13 +331,31 @@ export default function FamilyManagement() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Sélectionnez...</option>
-                  {relationshipOptions.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
+                  {relationshipOptions.map((option) => {
+                    const uniqueRelationships = ['Époux/Épouse', 'Père', 'Mère', 'Beau-père', 'Belle-mère'];
+                    const isUnique = uniqueRelationships.includes(option);
+                    const alreadyExists = isUnique && members.some(member => member.relationship === option);
+                    
+                    return (
+                      <option 
+                        key={option} 
+                        value={option}
+                        disabled={alreadyExists}
+                        style={alreadyExists ? { color: '#9CA3AF', fontStyle: 'italic' } : {}}
+                      >
+                        {option}{alreadyExists ? ' (Déjà ajouté)' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
                 {errors.relationship && (
                   <p className="mt-1 text-sm text-red-600">{errors.relationship.message}</p>
                 )}
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note :</strong> Les relations Époux/Épouse, Père, Mère, Beau-père et Belle-mère ne peuvent être ajoutées qu'une seule fois.
+                  </p>
+                </div>
               </div>
 
               <div>
@@ -400,39 +372,37 @@ export default function FamilyManagement() {
                 )}
               </div>
 
-              {!editingMember && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Documents justificatifs
-                  </label>
-                  <div className="flex items-center justify-center w-full">
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="w-8 h-8 mb-4 text-gray-500" />
-                        <p className="mb-2 text-sm text-gray-500">
-                          <span className="font-semibold">Cliquez pour uploader</span>
-                        </p>
-                        <p className="text-xs text-gray-500">PDF, PNG, JPG (MAX. 10MB)</p>
-                      </div>
-                      <input
-                        type="file"
-                        className="hidden"
-                        multiple
-                        accept=".pdf,.png,.jpg,.jpeg"
-                        onChange={handleFileChange}
-                      />
-                    </label>
-                  </div>
-                  {selectedFiles.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-600 mb-1">Fichiers sélectionnés :</p>
-                      {selectedFiles.map((file, index) => (
-                        <p key={index} className="text-xs text-gray-500">• {file.name}</p>
-                      ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Documents justificatifs
+                </label>
+                <div className="flex items-center justify-center w-full">
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                      <p className="mb-2 text-sm text-gray-500">
+                        <span className="font-semibold">Cliquez pour uploader</span>
+                      </p>
+                      <p className="text-xs text-gray-500">PDF, PNG, JPG (MAX. 10MB)</p>
                     </div>
-                  )}
+                    <input
+                      type="file"
+                      className="hidden"
+                      multiple
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={handleFileChange}
+                    />
+                  </label>
                 </div>
-              )}
+                {selectedFiles.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600 mb-1">Fichiers sélectionnés :</p>
+                    {selectedFiles.map((file, index) => (
+                      <p key={index} className="text-xs text-gray-500">• {file.name}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
             </form>
 
             <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
@@ -452,10 +422,10 @@ export default function FamilyManagement() {
                 {isSubmitting ? (
                   <div className="flex items-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    {editingMember ? 'Modification...' : 'Ajout...'}
+                    Ajout...
                   </div>
                 ) : (
-                  editingMember ? 'Modifier' : 'Ajouter'
+                  'Ajouter'
                 )}
               </button>
             </div>
