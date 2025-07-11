@@ -72,7 +72,7 @@ export const authService = {
   },
 
   // Créer un utilisateur (admin seulement)
-  async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'lastLogin'>, password: string): Promise<User> {
+  async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'lastLogin' | 'firstLogin'>, password: string): Promise<User> {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, userData.email, password);
       const firebaseUser = userCredential.user;
@@ -104,6 +104,10 @@ export const authService = {
           throw new Error('Format d\'email invalide');
         case 'auth/weak-password':
           throw new Error('Le mot de passe doit contenir au moins 6 caractères');
+        case 'auth/operation-not-allowed':
+          throw new Error('Création de compte désactivée');
+        case 'auth/too-many-requests':
+          throw new Error('Trop de tentatives. Réessayez plus tard');
         default:
           throw new Error('Erreur lors de la création du compte');
       }

@@ -98,7 +98,8 @@ export default function AdminDashboard() {
       icon: Users, 
       color: 'blue', 
       change: '+0%',
-      link: '/admin/users'
+      link: '/admin/users',
+      action: 'view'
     },
     { 
       name: 'Demandes en attente', 
@@ -106,7 +107,8 @@ export default function AdminDashboard() {
       icon: Clock, 
       color: 'orange', 
       change: '+0%',
-      link: '/admin/requests?status=pending'
+      link: '/admin/requests?status=pending',
+      action: 'view'
     },
     { 
       name: 'Demandes traitées', 
@@ -114,7 +116,8 @@ export default function AdminDashboard() {
       icon: CheckCircle, 
       color: 'green', 
       change: '+0%',
-      link: '/admin/requests?status=treated'
+      link: '/admin/requests?status=treated',
+      action: 'view'
     },
     { 
       name: 'Demandes ce mois', 
@@ -126,7 +129,8 @@ export default function AdminDashboard() {
       icon: FileText, 
       color: 'purple', 
       change: '+0%',
-      link: '/admin/requests'
+      link: '/admin/requests',
+      action: 'view'
     },
   ];
 
